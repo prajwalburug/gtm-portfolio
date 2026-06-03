@@ -1,0 +1,108 @@
+{
+  "name": "Outbound Scout — Signal Detection & Sequencing",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Daily Signal Scan",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cron", "expression": "0 6 * * 1-5"}]
+        }
+      }
+    },
+    {
+      "id": "call-scout",
+      "name": "Scout Signals",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [480, 300],
+      "parameters": {
+        "command": "python",
+        "arguments": [
+          "workflows/outbound-scout/code/scout_signals.py",
+          "--output",
+          "/tmp/signals.json"
+        ]
+      }
+    },
+    {
+      "id": "call-prioritize",
+      "name": "Prioritize Outbound",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [720, 300],
+      "parameters": {
+        "command": "python",
+        "arguments": [
+          "workflows/outbound-scout/code/prioritize_outbound.py",
+          "--signals",
+          "/tmp/signals.json"
+        ]
+      }
+    },
+    {
+      "id": "call-build-seq",
+      "name": "Build Sequences",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [960, 300],
+      "parameters": {
+        "command": "python",
+        "arguments": [
+          "workflows/outbound-scout/code/build_sequence.py",
+          "--input",
+          "/tmp/priority.json"
+        ]
+      }
+    },
+    {
+      "id": "if-high-priority",
+      "name": "Has High-Priority Leads?",
+      "type": "n8n-nodes-base.if",
+      "position": [1200, 300],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.high_priority }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "send-slack",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [1440, 300],
+      "parameters": {
+        "channel": "outbound-signals",
+        "text": "={{ 'Outbound Scout Alert\\nHigh-priority leads: ' + $json.high_priority + '\\nSequences generated: ' + $json.total_leads + '\\nTotal steps: ' + $json.total_steps }}",
+        "as_user": true
+      }
+    },
+    {
+      "id": "send-email",
+      "name": "Email Report to SDR Team",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [1440, 500],
+      "parameters": {
+        "fromEmail": "outbound-scout@wati.com",
+        "toEmail": "sdr-team@wati.com",
+        "subject": "New outbound sequences ready — {{ $json.total_leads }} high-priority leads",
+        "text": "={{ JSON.stringify($json.sequences, null, 2) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Signal Scan": {"main": [[{"node": "Scout Signals"}]]},
+    "Scout Signals": {"main": [[{"node": "Prioritize Outbound"}]]},
+    "Prioritize Outbound": {"main": [[{"node": "Build Sequences"}]]},
+    "Build Sequences": {"main": [[{"node": "Has High-Priority Leads?"}]]},
+    "Has High-Priority Leads?": {
+      "true": [[{"node": "Slack Notification"}, {"node": "Email Report to SDR Team"}]],
+      "false": []
+    }
+  }
+}

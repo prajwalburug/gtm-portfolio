@@ -18,31 +18,35 @@ Signal sources ──► Scout ──► Prioritizer ──► Sequence Builder 
 
 | Step | What Happens | Tool |
 |------|-------------|------|
-| 1 | Scrape signals from 4 sources: job postings, funding, leadership changes, tech stack changes | Python Scout |
-| 2 | Score each detected company: ICP fit (0-100) × signal strength weight | Python Prioritizer |
-| 3 | Top 10 prioritized accounts → check/create in HubSpot | n8n |
-| 4 | Generate personalized cold email + channel mix recommendations via LLM | Python Builder |
-| 5 | Send Slack digest with company, signal, score, and email draft for human approval | n8n |
+| 1 | Scrape signals from 4 sources: job postings, funding, leadership changes, tech stack changes | `scout_signals.py` |
+| 2 | Score each detected company: signal strength × recency → priority (HIGH/MEDIUM/LOW) | `scout_signals.py` |
+| 3 | Aggregate signals per lead: weight sources (funding=30, leadership=25, jobs=20, tech=15) + count bonus | `prioritize_outbound.py` |
+| 4 | Generate multi-channel outreach sequences with timing, channel, and copy per signal type | `build_sequence.py` |
+| 5 | Send Slack digest + email report with sequences ready for SDR review | n8n |
 
-## Signal Sources
+## Signal Sources & Scoring
 
-| Source | What We Look For | Weight |
-|--------|-----------------|--------|
-| Job postings | Companies hiring for Sales Ops, RevOps, Customer Experience roles | 1.2x |
-| Funding announcements | Series A+ funding rounds (recent 30 days) | 1.5x |
-| Leadership changes | New VP Sales, CRO, Head of Growth hires | 1.3x |
-| Tech stack changes | Added/removed messaging or CRM tools | 1.0x |
+| Source | What We Look For | Priority Weight | Typical Template |
+|--------|-----------------|-----------------|------------------|
+| Job postings | VP Sales, Head of CS, CRO hiring | 20 | "Growing team → automation helps new hires focus on revenue" |
+| Funding rounds | Seed through Series C | 30 | "Congrats on raise → Wati helps post-funding scale support" |
+| Leadership changes | New CRO, CMO, VP Sales | 25 | "New leaders re-evaluate tech stack in first 90 days" |
+| Tech adoption | New/displaceable tools (HubSpot, SFDC, Intercom) | 15 | "Seen on {{tool}} → Wati complements it with WhatsApp" |
+
+**Scoring formula:** `total_score = min(70, Σ signal_weights) + min(20, signal_count × 20)`  
+**Thresholds:** HIGH ≥ 60 | MEDIUM ≥ 30 | LOW < 30
 
 ## Why It Works
 
 - **Proactive, not reactive** — reach prospects while they're showing intent
 - **Prioritized** — only the highest-fit accounts get human attention
-- **Personalized** — LLM generates outreach specific to the signal type (funding email ≠ job posting email)
+- **Personalized** — signal-specific templates (funding email ≠ job posting email)
 - **Human-in-the-loop** — signals flagged, sequences generated, but approval required before sending
+- **No LLM dependency** — all scoring and sequences are deterministic rule-based (demo-safe)
 
 ## Tech Used
 
-Python · OpenAI/Anthropic · n8n · HubSpot · Slack
+Python · n8n · Slack · Email
 
 ## How to Run
 
