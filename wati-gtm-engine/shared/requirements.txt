@@ -1,0 +1,21 @@
+# AI & LLM
+openai>=1.0.0
+anthropic>=0.30.0
+
+# HTTP & APIs
+requests>=2.31.0
+
+# Data processing
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Demo data fallback
+faker>=20.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-mock>=3.12.0
+
+# Utilities
+colorama>=0.4.6
+tabulate>=0.9.0

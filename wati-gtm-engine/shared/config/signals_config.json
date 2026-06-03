@@ -1,0 +1,72 @@
+{
+  "description": "Signal source configuration for Wati outbound detection engine",
+  "version": "1.0",
+  "schedule_interval_hours": 6,
+  "global_rate_limit_per_source": 100,
+  "output_max_prioritized": 10,
+  "sources": {
+    "job_postings": {
+      "enabled": true,
+      "type": "rss",
+      "feeds": [
+        "https://boards.greenhouse.io/",
+        "https://jobs.lever.co/"
+      ],
+      "keywords": [
+        "sales operations",
+        "revenue operations",
+        "customer experience",
+        "growth manager",
+        "crm administrator",
+        "sales enablement",
+        "head of sales",
+        "vp of sales"
+      ],
+      "rate_limit_per_minute": 10,
+      "min_score_threshold": 30
+    },
+    "funding_announcements": {
+      "enabled": true,
+      "type": "api",
+      "source_url": "https://api.crunchbase.com/v4/",
+      "endpoint": "/entities/organizations",
+      "fields": ["name", "short_description", "funding_stage", "last_funding_amount", "last_funding_date", "permalink"],
+      "min_stage": "Series A",
+      "max_deal_age_days": 30,
+      "rate_limit_per_minute": 5,
+      "min_score_threshold": 50
+    },
+    "leadership_changes": {
+      "enabled": true,
+      "type": "api",
+      "sources": [
+        { "name": "LinkedIn API", "endpoint": "https://api.linkedin.com/v2/" },
+        { "name": "Crunchbase", "endpoint": "https://api.crunchbase.com/v4/" }
+      ],
+      "target_roles": [
+        "VP Sales",
+        "CRO",
+        "Chief Revenue Officer",
+        "Head of Growth",
+        "VP of Marketing",
+        "Chief Marketing Officer",
+        "CEO",
+        "Chief Customer Officer",
+        "Head of RevOps"
+      ],
+      "lookback_days": 60,
+      "rate_limit_per_minute": 3,
+      "min_score_threshold": 40
+    },
+    "tech_stack_changes": {
+      "enabled": true,
+      "type": "api",
+      "source_url": "https://api.builtwith.com/",
+      "target_tools": ["hubspot", "salesforce", "intercom", "zendesk", "twilio", "messagebird", "whatsapp business api"],
+      "change_type": ["added", "removed"],
+      "lookback_days": 30,
+      "rate_limit_per_minute": 10,
+      "min_score_threshold": 20
+    }
+  }
+}

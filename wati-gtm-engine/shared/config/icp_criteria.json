@@ -1,0 +1,49 @@
+{
+  "description": "Ideal Customer Profile criteria for Wati's GTM engine",
+  "version": "1.0",
+  "weights": {
+    "industry": 0.30,
+    "company_size": 0.25,
+    "title_relevance": 0.25,
+    "signal_strength": 0.20
+  },
+  "scoring": {
+    "industry": {
+      "target": ["SaaS", "E-commerce", "FinTech", "EdTech", "Healthcare", "Real Estate", "Professional Services", "Travel"],
+      "acceptable": ["Manufacturing", "Logistics", "Media", "Telecom"],
+      "exclude": ["Government", "Non-profit"],
+      "values": { "target": 100, "acceptable": 50, "exclude": 0 }
+    },
+    "company_size": {
+      "sweet_spot_min": 50,
+      "sweet_spot_max": 5000,
+      "values": {
+        "50_to_5000": 100,
+        "10_to_49": 60,
+        "5001_to_10000": 70,
+        "over_10000": 50,
+        "under_10": 30
+      }
+    },
+    "title_relevance": {
+      "ideal": ["VP of Sales", "Head of Growth", "CRO", "Chief Revenue Officer", "Director of Sales", "VP of Marketing", "Head of RevOps", "Director of RevOps", "CEO", "CCO"],
+      "good": ["Sales Manager", "Marketing Manager", "Growth Manager", "Operations Manager", "Customer Success Manager"],
+      "acceptable": ["Founder", "Co-Founder", "Product Manager", "Business Development"],
+      "values": { "ideal": 100, "good": 70, "acceptable": 40 }
+    },
+    "signal_strength": {
+      "sources": {
+        "job_posting": { "keywords": ["sales operations", "revops", "customer experience", "growth", "crm administrator", "sales enablement"], "weight": 1.2 },
+        "funding": { "min_stage": "Series A", "weight": 1.5 },
+        "leadership_change": { "roles": ["VP Sales", "CRO", "Head of Growth", "CEO"], "weight": 1.3 },
+        "tech_change": { "tools": ["hubspot", "salesforce", "intercom", "zendesk", "messagebird", "twilio"], "weight": 1.0 }
+      }
+    }
+  },
+  "classification_thresholds": {
+    "hot": { "min_score": 70 },
+    "warm": { "min_score": 40, "max_score": 69 },
+    "nurture": { "min_score": 10, "max_score": 39 },
+    "disqualified": { "max_score": 9 }
+  }
+}
