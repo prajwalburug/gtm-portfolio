@@ -19,10 +19,46 @@
       "position": [480, 300],
       "parameters": {
         "command": "python",
+      "arguments": [
+        "workflows/outbound-scout/code/scout_signals.py",
+        "--output",
+        "/tmp/signals.json",
+        "--dry-run"
+      ]
+    },
+    {
+      "id": "call-prioritize",
+      "name": "Prioritize Outbound",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [720, 300],
+      "parameters": {
+        "command": "python",
         "arguments": [
-          "workflows/outbound-scout/code/scout_signals.py",
+          "workflows/outbound-scout/code/prioritize_outbound.py",
+          "--signals",
+          "/tmp/signals.json",
           "--output",
-          "/tmp/signals.json"
+          "/tmp/priority.json",
+          "--dry-run"
+        ]
+      }
+    },
+    {
+      "id": "call-build-seq",
+      "name": "Build Sequences",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [960, 300],
+      "parameters": {
+        "command": "python",
+        "arguments": [
+          "workflows/outbound-scout/code/build_sequence.py",
+          "--input",
+          "/tmp/priority.json",
+          "--signals",
+          "/tmp/signals.json",
+          "--output",
+          "/tmp/sequences.json",
+          "--dry-run"
         ]
       }
     },
@@ -78,7 +114,7 @@
       "position": [1440, 300],
       "parameters": {
         "channel": "outbound-signals",
-        "text": "={{ 'Outbound Scout Alert\\nHigh-priority leads: ' + $json.high_priority + '\\nSequences generated: ' + $json.total_leads + '\\nTotal steps: ' + $json.total_steps }}",
+        "text": "={{ 'Outbound Scout Alert — sequences ready for SDR review. Check the email report for details.' }}",
         "as_user": true
       }
     },

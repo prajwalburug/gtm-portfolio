@@ -14,28 +14,28 @@ I build go-to-market systems that turn fragmented tools, messy data, and manual 
 
 **The Problem:** Wati (16,000+ customers, 190+ countries) needed to scale revenue without adding headcount. Lead triage was manual, pipeline health was reactive, and outbound was spray-and-pray. Fragmented tools meant data lived in silos.
 
-**What We Built:** A unified AI-powered GTM engine across three workflows:
+**What We Built:** A unified intelligent GTM engine with 7 agents across three workflows:
 
-| Workflow | What It Does | Why It Matters | 
-|----------|-------------|----------------|
-| [Lead Lifecycle](./wati-gtm-engine/workflows/lead-lifecycle) | Auto-qualifies, enriches, and routes every inbound lead by ICP fit score | Speed to lead drops from hours to minutes |
-| [Pipeline Intelligence](./wati-gtm-engine/workflows/pipeline-intel) | Daily deal risk detection + next-best-action recommendations | Catch at-risk deals before they slip |
-| [Outbound Detection](./wati-gtm-engine/workflows/outbound-scout) | Scans 4 signal sources, prioritizes accounts, generates personalized sequences | Proactive pipeline, not reactive |
+| Workflow | Agents | What It Does | Why It Matters | 
+|----------|--------|-------------|----------------|
+| [Lead Lifecycle](./wati-gtm-engine/workflows/lead-lifecycle) | `qualify_lead.py` | Auto-qualifies inbound leads by ICP fit score using 4 weighted factors | Speed to lead drops from hours to minutes |
+| [Pipeline Intelligence](./wati-gtm-engine/workflows/pipeline-intel) | `analyze_pipeline.py`, `next_best_action.py` | Daily deal risk scoring (5 factors) + rules-based action recommendations | Catch at-risk deals before they slip |
+| [Outbound Detection](./wati-gtm-engine/workflows/outbound-scout) | `scout_signals.py`, `prioritize_outbound.py`, `build_sequence.py` | Scans 4 signal sources, scores accounts, generates multi-channel sequences | Proactive pipeline, not reactive |
 
 **How It Works:**
 ```
-Inbound Lead ──► AI Qualifier (LLM scores ICP fit) ──► Enrichment ──► Route to AE / Nurture
-Open Deals   ──► Risk Engine (rules + LLM sentiment) ──► Recommendations ──► Slack Alert
-Signals      ──► Scout + Prioritizer ──► Sequence Builder ──► Human Approval
+Lead ──► Qualifier (ICP score: industry×size×title×signal) ──► Route to AE / Nurture
+Deals ──► Risk Engine (staleness×activity×threading×amount×sentiment) ──► NBA ──► Slack
+Signals ──► Scout (jobs/funding/leadership/tech) ──► Prioritizer ──► Builder ──► SDR
 ```
 
 **Why It Works:**
-- Every agent runs with `--demo` mode — reviewers see real output without API keys
+- Every agent has `--demo` + `--dry-run` modes — reviewers see real output with zero setup
 - All n8n workflows are exportable JSON — import into any instance
-- LLM prompts are externalized in config — no hardcoded AI logic
+- Rule-based scoring (no LLM key needed) — runs fully offline
 - Modular by design — each workflow operates independently
 
-**Tech Stack:** HubSpot · n8n · Python · OpenAI/Anthropic · Clay · SQL · Slack
+**Tech Stack:** Python 3 · n8n · SQL · HubSpot · Slack
 
 <span class="tag">Lead Routing</span> <span class="tag">AI Scoring</span> <span class="tag">HubSpot</span> <span class="tag">n8n</span> <span class="tag">Pipeline Analytics</span> <span class="tag">Outbound</span>
 

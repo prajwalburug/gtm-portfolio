@@ -51,13 +51,20 @@ def main():
     parser.add_argument("--demo", action="store_true", help="Run with built-in sample data")
     parser.add_argument("--dry-run", action="store_true", help="Preview without side effects")
     parser.add_argument("--signals", type=str, help="JSON file with scout_signals.py output")
+    parser.add_argument("--output", type=str, help="Path to save priority results JSON")
     args = parser.parse_args()
 
     if args.signals:
         with open(args.signals) as f:
             signals_data = json.load(f)
         signals = signals_data if isinstance(signals_data, list) else signals_data.get("signals", [])
-        leads = list({s.get("lead_name") for s in signals})
+        unique_names = {s.get("lead_name") for s in signals if s.get("lead_name")}
+        leads = []
+        for n in sorted(unique_names):
+            signal_samples = [s for s in signals if s.get("lead_name") == n]
+            industry = signal_samples[0].get("lead_industry", "") if signal_samples else ""
+            size = signal_samples[0].get("lead_size", 0) if signal_samples else 0
+            leads.append({"name": n, "industry": industry, "size": size})
     elif args.demo:
         signals = [
             {"lead_name": "DataStream Inc", "source": "funding"},
@@ -92,6 +99,11 @@ def main():
     }
 
     print(json.dumps(result, indent=2))
+
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(result, f, indent=2)
+        print(f"\nResults written to {args.output}", file=sys.stderr)
 
     if args.dry_run:
         print("\n[dry-run] No outbound actions initiated.", file=sys.stderr)

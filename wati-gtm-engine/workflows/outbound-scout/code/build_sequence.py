@@ -130,6 +130,8 @@ def main():
     parser.add_argument("--demo", action="store_true", help="Run with built-in sample data")
     parser.add_argument("--dry-run", action="store_true", help="Preview sequences without side effects")
     parser.add_argument("--input", type=str, help="JSON file with prioritize_outbound.py output")
+    parser.add_argument("--signals", type=str, help="JSON file with raw signals (for sequence personalization)")
+    parser.add_argument("--output", type=str, help="Path to save sequence results JSON")
     args = parser.parse_args()
 
     if args.input:
@@ -154,6 +156,11 @@ def main():
         signals_raw = []
         leads = []
 
+    if args.signals:
+        with open(args.signals) as f:
+            sig_data = json.load(f)
+        signals_raw = sig_data if isinstance(sig_data, list) else sig_data.get("signals", [])
+
     sequences = []
     for lead in leads:
         name = lead.get("lead_name", "")
@@ -173,6 +180,11 @@ def main():
     }
 
     print(json.dumps(output, indent=2))
+
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(output, f, indent=2)
+        print(f"\nResults written to {args.output}", file=sys.stderr)
 
     if args.dry_run:
         print("\n[dry-run] No sequences enqueued in any outreach system.", file=sys.stderr)
