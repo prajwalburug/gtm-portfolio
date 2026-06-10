@@ -1,0 +1,80 @@
+{
+  "name": "GTM Enrichment Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "filePath": "samples/input_companies.csv",
+        "options": {}
+      },
+      "name": "Read CSV",
+      "type": "n8n-nodes-base.readBinaryFiles",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const companies = $input.all();\nreturn companies.map(c => ({\n  json: {\n    company_name: c.json.company_name,\n    domain: c.json.domain,\n    industry: c.json.industry,\n  }\n}));"
+      },
+      "name": "Parse Companies",
+      "type": "n8n-nodes-base.code",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nreturn data.map(item => {\n  const company = item.json;\n  return {\n    json: {\n      ...company,\n      enrichment: {\n        source_a: { status: 'found', confidence: 0.92, employees: Math.floor(Math.random() * 400) + 50 },\n        source_b: { status: 'found', confidence: 0.85, decision_makers: ['Head of Sales', 'VP Revenue'] },\n        source_c: { status: 'found', confidence: 0.75, tech_stack: ['Salesforce', 'HubSpot'] }\n      }\n    }\n  };\n});"
+      },
+      "name": "Enrichment Waterfall",
+      "type": "n8n-nodes-base.code",
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.all();\nreturn data.map(item => {\n  const company = item.json;\n  const dm = company.enrichment.source_b.decision_makers;\n  const roles = ['Head of Sales', 'VP of Sales', 'VP of Revenue', 'CRO', 'Director of Sales'];\n  const firstNames = ['Alex', 'Jordan', 'Taylor', 'Morgan', 'Casey'];\n  const lastNames = ['Chen', 'Patel', 'Kim', 'Martinez', 'Johnson'];\n  \n  return dm.map((role, i) => {\n    const first = firstNames[i % firstNames.length];\n    const last = lastNames[i % lastNames.length];\n    const email = `${first.toLowerCase()}.${last.toLowerCase()}@${company.domain}`;\n    return {\n      json: {\n        company: company.company_name,\n        name: `${first} ${last}`,\n        role: role,\n        email: email,\n        email_score: Math.floor(Math.random() * 20) + 80,\n        icp_score: Math.floor(Math.random() * 30) + 70,\n        seniority_score: role === 'CRO' ? 100 : role === 'VP of Revenue' ? 95 : 85,\n        signal_score: Math.floor(Math.random() * 25) + 75,\n      }\n    };\n  });\n}).flat();"
+      },
+      "name": "Generate Leads",
+      "type": "n8n-nodes-base.code",
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all();\nreturn leads.map(lead => {\n  const d = lead.json;\n  const composite = Math.round(\n    d.icp_score * 0.35 +\n    d.seniority_score * 0.25 +\n    d.email_score * 0.20 +\n    d.signal_score * 0.20\n  );\n  \n  let list, priority;\n  if (composite >= 80) { list = 'Active'; priority = 'High'; }\n  else if (composite >= 50) { list = 'Active'; priority = 'Medium'; }\n  else if (composite >= 20) { list = 'Nurture'; priority = 'Low'; }\n  else { list = 'Excluded'; priority = 'None'; }\n  \n  return {\n    json: {\n      ...d,\n      composite_score: composite,\n      smartlead_list: list,\n      priority: priority,\n      personalization: `Hi ${d.name.split(' ')[0]}, noticed ${d.company} is scaling. Would love to connect.`\n    }\n  };\n});"
+      },
+      "name": "Score & Route",
+      "type": "n8n-nodes-base.code",
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leads = $input.all();\nconst active = leads.filter(l => l.json.smartlead_list !== 'Excluded');\nreturn active;"
+      },
+      "name": "Filter Excluded",
+      "type": "n8n-nodes-base.code",
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "fileFormat": "csv",
+        "options": {
+          "fileName": "smartlead_export.csv"
+        }
+      },
+      "name": "Export to CSV",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "position": [1650, 300]
+    }
+  ],
+  "connections": {
+    "Start": {"main": [[{"node": "Read CSV", "type": "main"}]]},
+    "Read CSV": {"main": [[{"node": "Parse Companies", "type": "main"}]]},
+    "Parse Companies": {"main": [[{"node": "Enrichment Waterfall", "type": "main"}]]},
+    "Enrichment Waterfall": {"main": [[{"node": "Generate Leads", "type": "main"}]]},
+    "Generate Leads": {"main": [[{"node": "Score & Route", "type": "main"}]]},
+    "Score & Route": {"main": [[{"node": "Filter Excluded", "type": "main"}]]},
+    "Filter Excluded": {"main": [[{"node": "Export to CSV", "type": "main"}]]}
+  }
+}

@@ -11,6 +11,7 @@ I build go-to-market systems that turn fragmented tools, messy data, and manual 
 | 1 | **Wati AI-First GTM Engine** | Lead Lifecycle · Pipeline Intelligence · Outbound Detection | Scaling revenue without scaling headcount for a 16K+ customer WhatsApp platform | HubSpot · n8n · Python · LLM · Clay · SQL | [`wati-gtm-engine/`](./wati-gtm-engine) |
 | 2 | **AI Content Studio** | Research · Generation · Repurposing · Brand Compilation | Inconsistent brand voice across LinkedIn, email, and blog | Obsidian · Python · Firecrawl · n8n · Claude/ChatGPT | [`ai-content-studio/`](./ai-content-studio) |
 | 3 | **GTM Intelligence Platform** | Account Research + Deal Intelligence (MEDDIC) | MCP-native AI agents for revenue intelligence | Python · MCP · Claude · PostgreSQL · Clay · Gong | [`gtm-intelligence-platform/`](./gtm-intelligence-platform) |
+| 4 | **GTM Enrichment Pipeline** | Enrichment Waterfall · Email Verification · Scoring · Smartlead Export | Find and enrich decision-makers at B2B SaaS companies for cold outbound | Python · n8n · Clay/Smartlead/Million Verifier patterns | [`gtm-enrichment-pipeline/`](./gtm-enrichment-pipeline) |
 
 ### 1. Wati AI-First GTM Engine
 
@@ -106,6 +107,39 @@ Signals ──► Scout (jobs/funding/leadership/tech) ──► Prioritizer ─
 **Tech Stack:** Python 3 · MCP SDK · Claude API · PostgreSQL + pgvector · Redis · Clay (mock) · Gong (mock)
 
 ➡️ [Full case study →](./gtm-intelligence-platform)
+
+### 4. GTM Enrichment Pipeline
+
+**The Problem:** SDR teams spend hours manually finding decision-makers, guessing email formats, and building lists. Enrichment tools are fragmented — Clearbit here, Apollo there, Million Verifier somewhere else. Without a unified pipeline, data quality drops and outbound campaigns suffer.
+
+**What We Built:** A Clay-inspired enrichment waterfall engine — load 100 companies → find decision-makers → verify emails → score by fit → export to Smartlead.
+
+| Workflow | File | What It Does |
+|----------|------|-------------|
+| **Enrichment Waterfall** | `workflows/enrichment_waterfall.py` | Clay-style multi-source enrichment with confidence scoring per source |
+| **Email Verification** | `workflows/email_verifier.py` | Million Verifier pattern: syntax → MX → SMTP verification pipeline |
+| **Scoring Engine** | `workflows/scoring_engine.py` | Weighted lead scoring (ICP 35% + seniority 25% + email 20% + signals 20%) |
+| **Smartlead Export** | `workflows/smartlead_format.py` | Smartlead-ready CSV with personalization columns |
+
+**How It Works:**
+```
+input.csv ──► Enrichment Waterfall (try Source A → B → C) ──► 
+Email Verify (syntax → MX → SMTP) ──► 
+Score (ICP×Seniority×Email×Signals) ──► 
+Route (Active 80+ / Nurture 50+ / Excluded) ──► 
+Smartlead CSV
+```
+
+**Why It Works:**
+- `python demo/run.py` — one-command end-to-end with sample data, no credentials needed
+- Same architecture as real Clay workflows: waterfall enrichment, conditional routing, weighted scoring
+- Maps directly to production tools: Clay, Smartlead, Million Verifier, Airscale, Apollo
+- All scoring is rule-based (no LLM key needed) — runs fully offline
+- n8n workflow included for visual editing and scheduling
+
+**Tech Stack:** Python 3 · n8n · Clay/Smartlead/Million Verifier (design patterns)
+
+➡️ [Full case study →](./gtm-enrichment-pipeline)
 
 ---
 
